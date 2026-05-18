@@ -1,0 +1,56 @@
+{
+  "timestamp": "2026-03-11 00:45:46",
+  "total_time_s": 2566.7572515010834,
+  "grid_sizes": {
+    "scenario": 40,
+    "sweep": 40
+  },
+  "ticks": {
+    "scenario": 800,
+    "sweep": 600
+  },
+  "seeds": [
+    42,
+    123,
+    456,
+    789,
+    1011
+  ],
+  "sweep_d": [
+    0.0,
+    0.01,
+    0.02,
+    0.05,
+    0.1,
+    0.15,
+    0.2,
+    0.3,
+    0.5,
+    0.8
+  ],
+  "sweep_h": [
+    0.0,
+    0.1,
+    0.2,
+    0.3,
+    0.4,
+    0.5,
+    0.6,
+    0.7,
+    0.8,
+    1.0
+  ],
+  "mixing_mode": "global",
+  "local_sweep_included": true,
+  "colonization_sweep_included": true,
+  "fixes_applied": [
+    "theta-binned ecological H (not lineage-based)",
+    "global mixing (teleport, not local diffusion)",
+    "local diffusion full sweep added",
+    "colonization-limited sweep added",
+    "statistical tests (Welch t-test, Cohen d) added",
+    "uniform abiogenesis (not E-dependent)",
+    "unique IDs for all founders",
+    "proper across-seed statistics"
+  ]
+}

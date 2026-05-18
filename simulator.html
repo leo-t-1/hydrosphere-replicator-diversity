@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Replicator Diversity Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Barlow:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #07080f;
+  --surface: #0c0d1c;
+  --surface2: #111228;
+  --surface3: #161830;
+  --border: #1a1f3a;
+  --border2: #242850;
+  --text: #c0caf5;
+  --text-dim: #4a5280;
+  --text-muted: #2a3060;
+  --cyan: #00d4ff;
+  --cyan-dim: #006680;
+  --green: #00ff9d;
+  --green-dim: #005840;
+  --amber: #ffaa00;
+  --amber-dim: #604000;
+  --red: #ff4455;
+  --red-dim: #600018;
+  --blue: #4488ff;
+  --blue-dim: #102050;
+  --purple: #a855f7;
+  --font-head: 'Chakra Petch', monospace;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-body: 'Barlow', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100%; overflow-x: hidden; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.5;
+  background-image:
+    radial-gradient(ellipse 80% 40% at 20% -10%, rgba(68,136,255,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 30% at 80% 110%, rgba(0,212,255,0.04) 0%, transparent 60%);
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  height: 62px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(8px);
+}
+
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-icon {
+  font-size: 26px;
+  color: var(--cyan);
+  filter: drop-shadow(0 0 8px var(--cyan));
+  animation: pulse-icon 3s ease-in-out infinite;
+}
+@keyframes pulse-icon {
+  0%, 100% { filter: drop-shadow(0 0 6px var(--cyan)); }
+  50% { filter: drop-shadow(0 0 14px var(--cyan)); }
+}
+.brand-title {
+  font-family: var(--font-head);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--text);
+}
+.brand-sub {
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+  font-family: var(--font-body);
+  font-weight: 300;
+  font-style: italic;
+}
+
+.sim-controls { display: flex; align-items: center; gap: 14px; }
+
+.ctrl-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  color: var(--text-dim);
+  font-family: var(--font-head);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  padding: 7px 16px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.15s;
+  outline: none;
+}
+.ctrl-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+.ctrl-btn.active {
+  background: rgba(0,212,255,0.1);
+  border-color: var(--cyan);
+  color: var(--cyan);
+  box-shadow: 0 0 10px rgba(0,212,255,0.2);
+}
+
+.speed-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 5px 10px;
+  border-radius: 3px;
+}
+.label-sm {
+  font-family: var(--font-head);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+}
+.val-sm {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--cyan);
+  min-width: 22px;
+  text-align: center;
+}
+
+/* ── LAYOUT ── */
+.layout {
+  display: grid;
+  grid-template-columns: 270px 1fr 290px;
+  gap: 0;
+  min-height: calc(100vh - 62px - 220px);
+}
+
+.panel {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 16px;
+  overflow-y: auto;
+}
+.panel:last-child { border-right: none; }
+
+/* ── LEFT PANEL ── */
+.section-head {
+  font-family: var(--font-head);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--text-dim);
+  margin: 18px 0 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.section-head:first-child { margin-top: 2px; }
+
+.scenarios-grid { display: flex; flex-direction: column; gap: 6px; }
+
+.scenario-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 9px 11px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s;
+  text-align: left;
+  outline: none;
+  width: 100%;
+}
+.scenario-card:hover { border-color: var(--border2); background: var(--surface3); }
+.scenario-card.active {
+  border-color: var(--cyan);
+  background: rgba(0,212,255,0.06);
+  box-shadow: 0 0 0 1px rgba(0,212,255,0.15);
+}
+.sc-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px currentColor;
+}
+.sc-info { flex: 1; }
+.sc-name {
+  font-family: var(--font-head);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+.sc-params {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 1px;
+}
+
+/* ── SLIDERS ── */
+.param-row { margin-bottom: 13px; }
+.param-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 5px;
+}
+.param-name {
+  font-family: var(--font-head);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
+.param-val {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cyan);
+}
+.slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  background: var(--border2);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  background: var(--cyan);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 8px var(--cyan);
+  transition: box-shadow 0.1s;
+}
+.slider::-webkit-slider-thumb:hover { box-shadow: 0 0 14px var(--cyan); }
+.slider.amber::-webkit-slider-thumb { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+.slider.green::-webkit-slider-thumb { background: var(--green); box-shadow: 0 0 8px var(--green); }
+
+/* Pattern selector */
+.pattern-row { display: flex; gap: 5px; margin-bottom: 13px; }
+.pat-btn {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-family: var(--font-head);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  padding: 5px 4px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.12s;
+  outline: none;
+  text-align: center;
+}
+.pat-btn:hover { border-color: var(--border2); color: var(--text); }
+.pat-btn.active { border-color: var(--amber); color: var(--amber); background: rgba(255,170,0,0.07); }
+
+/* Grid size */
+.gsize-row { display: flex; gap: 5px; margin-bottom: 13px; }
+.gsize-btn {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 5px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.12s;
+  outline: none;
+  text-align: center;
+}
+.gsize-btn.active { border-color: var(--purple); color: var(--purple); background: rgba(168,85,247,0.07); }
+.gsize-btn:hover { border-color: var(--border2); color: var(--text); }
+
+/* Mix mode toggle */
+.mix-toggle {
+  display: flex;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.mix-opt {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-family: var(--font-head);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  padding: 6px 4px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.12s;
+  outline: none;
+}
+.mix-opt.active { background: rgba(255,170,0,0.1); color: var(--amber); }
+
+.explainer-text {
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--text-dim);
+  font-style: italic;
+  padding: 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--cyan-dim);
+  border-radius: 0 3px 3px 0;
+  min-height: 60px;
+}
+
+/* ── CENTER PANEL ── */
+.center-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 20px;
+  background: var(--bg);
+  border-right: 1px solid var(--border);
+}
+
+.canvas-wrap {
+  position: relative;
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(0,212,255,0.04), 0 0 80px rgba(68,136,255,0.03);
+}
+
+#simCanvas {
+  display: block;
+  image-rendering: pixelated;
+}
+
+.canvas-overlay {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 6px;
+}
+.overlay-btn {
+  background: rgba(7,8,15,0.75);
+  border: 1px solid var(--border2);
+  color: var(--text-dim);
+  font-family: var(--font-head);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  padding: 4px 9px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.12s;
+  outline: none;
+  backdrop-filter: blur(4px);
+}
+.overlay-btn:hover, .overlay-btn.active {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+/* Color scale legend */
+.color-legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+.legend-bar {
+  height: 8px;
+  width: 200px;
+  border-radius: 4px;
+  background: linear-gradient(to right,
+    rgb(30,80,220), rgb(0,190,200), rgb(50,220,150), rgb(220,180,30), rgb(220,50,50));
+}
+.legend-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+}
+
+/* Stats bar */
+.stats-bar {
+  display: flex;
+  gap: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px 20px;
+  width: 100%;
+  max-width: 480px;
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+.stat-val {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--cyan);
+  line-height: 1;
+}
+.stat-label {
+  font-family: var(--font-head);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ── RIGHT PANEL ── */
+.right-panel { border-right: none; }
+
+.metric-block {
+  margin-bottom: 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px 10px 8px;
+}
+.metric-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.metric-name {
+  font-family: var(--font-head);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--text-dim);
+}
+.metric-badge {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 3px;
+}
+.metric-badge.cyan { background: rgba(0,212,255,0.12); color: var(--cyan); }
+.metric-badge.amber { background: rgba(255,170,0,0.12); color: var(--amber); }
+.metric-note {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 5px;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+canvas.chart { display: block; width: 100%; }
+
+.insight-box {
+  background: rgba(0,212,255,0.04);
+  border: 1px solid var(--cyan-dim);
+  border-radius: 4px;
+  padding: 10px 12px;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--text-dim);
+  min-height: 60px;
+}
+.insight-box strong { color: var(--cyan); font-weight: 500; }
+
+/* ── SCIENCE STRIP ── */
+.science-strip {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+.sci-box {
+  padding: 20px 22px;
+  border-right: 1px solid var(--border);
+}
+.sci-box:last-child { border-right: none; }
+.sci-title {
+  font-family: var(--font-head);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--cyan);
+  margin-bottom: 10px;
+}
+.sci-box p {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+.sci-box p:last-child { margin-bottom: 0; }
+.sci-box strong, .sci-box em { color: var(--text); font-style: normal; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* ── RANGE SLIDER ── */
+input[type=range] { vertical-align: middle; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-icon">⬡</span>
+    <div>
+      <div class="brand-title">REPLICATOR DIVERSITY SIMULATOR</div>
+      <div class="brand-sub">Interactive view of the same lattice model used by the Python experiment</div>
+    </div>
+  </div>
+  <div class="sim-controls">
+    <button id="btnReset" class="ctrl-btn">↺ RESET</button>
+    <button id="btnPlay" class="ctrl-btn active">⏸ PAUSE</button>
+    <div class="speed-wrap">
+      <span class="label-sm">TICKS/FRAME</span>
+      <input type="range" id="speedSlider" min="1" max="50" value="20" class="slider" style="width:80px">
+      <span id="speedVal" class="val-sm">20</span>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- LEFT: Controls -->
+  <aside class="panel left-panel">
+
+    <div class="section-head">HYDROSPHERE SCENARIOS</div>
+    <div class="scenarios-grid" id="scenariosGrid">
+      <button class="scenario-card" data-scenario="ocean">
+        <span class="sc-dot" style="background:#3b82f6;color:#3b82f6"></span>
+        <div class="sc-info"><div class="sc-name">Deep Ocean</div><div class="sc-params">h=0.1 · D=0.50 · uniform</div></div>
+      </button>
+      <button class="scenario-card active" data-scenario="ponds">
+        <span class="sc-dot" style="background:#10b981;color:#10b981"></span>
+        <div class="sc-info"><div class="sc-name">Shallow Ponds</div><div class="sc-params">h=0.80 · D=0.02 · patches</div></div>
+      </button>
+      <button class="scenario-card" data-scenario="tidal">
+        <span class="sc-dot" style="background:#f59e0b;color:#f59e0b"></span>
+        <div class="sc-info"><div class="sc-name">Tidal Zone</div><div class="sc-params">h=0.70 · D=0.15 · patches</div></div>
+      </button>
+      <button class="scenario-card" data-scenario="vents">
+        <span class="sc-dot" style="background:#ef4444;color:#ef4444"></span>
+        <div class="sc-info"><div class="sc-name">Hydrothermal Vents</div><div class="sc-params">h=0.60 · D=0.08 · hotspots</div></div>
+      </button>
+    </div>
+
+    <div class="section-head">PARAMETERS</div>
+
+    <div class="param-row">
+      <div class="param-label-row">
+        <span class="param-name">HETEROGENEITY (h)</span>
+        <span class="param-val" id="hVal">0.80</span>
+      </div>
+      <input type="range" id="hSlider" min="0" max="1" step="0.01" value="0.80" class="slider">
+    </div>
+
+    <div class="param-row">
+      <div class="param-label-row">
+        <span class="param-name">MIXING RATE (D)</span>
+        <span class="param-val" id="dVal">0.02</span>
+      </div>
+      <input type="range" id="dSlider" min="0" max="1" step="0.01" value="0.02" class="slider amber">
+    </div>
+
+    <div class="param-row">
+      <div class="param-label-row">
+        <span class="param-name">NICHE WIDTH (β)</span>
+        <span class="param-val" id="betaVal">20</span>
+      </div>
+      <input type="range" id="betaSlider" min="5" max="50" step="1" value="20" class="slider green">
+    </div>
+
+    <div class="param-row">
+      <div class="param-label-row">
+        <span class="param-name">ABIOGENESIS MODE</span>
+      </div>
+      <div class="pattern-row" id="abioModeRow">
+        <button class="pat-btn active" data-abio="uniform">UNIFORM</button>
+        <button class="pat-btn" data-abio="fixed_theta">FIXED THETA</button>
+      </div>
+    </div>
+
+    <div class="param-row">
+      <div class="param-label-row">
+        <span class="param-name">ABIO THETA</span>
+        <span class="param-val" id="abioThetaVal">0.50</span>
+      </div>
+      <input type="range" id="abioThetaSlider" min="0" max="1" step="0.01" value="0.50" class="slider">
+    </div>
+
+    <div class="param-row">
+      <div class="param-label-row">
+        <span class="param-name">ENV PATTERN</span>
+      </div>
+      <div class="pattern-row" id="patternRow">
+        <button class="pat-btn" data-pat="uniform">UNIFORM</button>
+        <button class="pat-btn active" data-pat="patches">PATCHES</button>
+        <button class="pat-btn" data-pat="hotspots">HOTSPOTS</button>
+        <button class="pat-btn" data-pat="gradient">GRADIENT</button>
+      </div>
+    </div>
+
+    <div class="param-row">
+      <div class="param-label-row">
+        <span class="param-name">GRID SIZE</span>
+      </div>
+      <div class="gsize-row" id="gsizeRow">
+        <button class="gsize-btn active" data-size="40">40</button>
+        <button class="gsize-btn" data-size="60">60</button>
+        <button class="gsize-btn" data-size="80">80</button>
+      </div>
+    </div>
+
+    <div class="param-row">
+      <div class="param-label-row">
+        <span class="param-name">TRANSPORT RULE</span>
+      </div>
+      <div class="explainer-text" style="min-height:0">
+        Global teleport mixing, matching the Python runs: each moved replicator is reassigned to a random empty cell anywhere on the lattice.
+      </div>
+    </div>
+
+    <div class="section-head">WHY THIS MATTERS</div>
+    <div class="explainer-text" id="whyText">Loading...</div>
+
+  </aside>
+
+  <!-- CENTER: Simulation -->
+  <main class="panel center-panel">
+    <div class="canvas-wrap">
+      <canvas id="simCanvas" width="480" height="480"></canvas>
+      <div class="canvas-overlay">
+        <button id="btnEnvMap" class="overlay-btn">SHOW ENV</button>
+      </div>
+    </div>
+    <div class="color-legend">
+      <span class="legend-label">θ=0</span>
+      <div class="legend-bar"></div>
+      <span class="legend-label">θ=1</span>
+      <span class="legend-label" style="margin-left:10px;color:var(--text-muted)">← niche preference →</span>
+    </div>
+    <div class="stats-bar">
+      <div class="stat"><span class="stat-val" id="statTick">0</span><span class="stat-label">TICK</span></div>
+      <div class="stat"><span class="stat-val" id="statOcc">0%</span><span class="stat-label">OCCUPANCY</span></div>
+      <div class="stat"><span class="stat-val" id="statPop">0</span><span class="stat-label">POPULATION</span></div>
+      <div class="stat"><span class="stat-val" id="statEcoTypes">0</span><span class="stat-label">ECO TYPES</span></div>
+    </div>
+  </main>
+
+  <!-- RIGHT: Metrics -->
+  <aside class="panel right-panel">
+    <div class="metric-block">
+      <div class="metric-head">
+        <span class="metric-name">FUNCTIONAL DIVERSITY</span>
+        <span class="metric-badge cyan">θ<sub>std</sub></span>
+      </div>
+      <canvas id="chartTheta" class="chart" width="270" height="100"></canvas>
+      <div class="metric-note">Std dev of ecological optima — the real diversity metric, not affected by neutral drift</div>
+    </div>
+
+    <div class="metric-block">
+      <div class="metric-head">
+        <span class="metric-name">ECOLOGICAL DIVERSITY</span>
+        <span class="metric-badge amber">H'</span>
+      </div>
+      <canvas id="chartShannon" class="chart" width="270" height="100"></canvas>
+      <div class="metric-note">Shannon entropy of θ-bins (not lineages) — avoids neutral accumulation artifact</div>
+    </div>
+
+    <div class="metric-block">
+      <div class="metric-head">
+        <span class="metric-name">NICHE DISTRIBUTION</span>
+      </div>
+      <canvas id="chartHist" class="chart" width="270" height="80"></canvas>
+      <div class="metric-note">Distribution of θ values — wide spread = high functional diversity</div>
+    </div>
+
+    <div class="insight-box" id="insightBox">
+      Start the simulation to see live analysis here.
+    </div>
+  </aside>
+</div>
+
+<div class="science-strip">
+  <div class="sci-box">
+    <div class="sci-title">FUNCTIONAL DIVERSITY (θ<sub>std</sub>)</div>
+    <p>Every replicator has a niche optimum θ — the local environment quality where it replicates fastest.
+    θ<sub>std</sub> measures how spread out these optima are across the population.</p>
+    <p>High θ<sub>std</sub> means replicators occupy genuinely different ecological niches. This is the
+    <em>meaningful</em> diversity metric — not lineage count, which can grow from neutral drift alone.</p>
+  </div>
+  <div class="sci-box">
+    <div class="sci-title">WHY MIXING MATTERS</div>
+    <p id="sciMixingText">Mixing rate D controls how often replicators are teleported to random empty cells anywhere on the grid.
+    Low D preserves isolated communities that locally adapt over time. High D causes constant long-range redistribution that
+    breaks down niche matching.</p>
+    <p>Key empirical finding: <strong>functional diversity peaks at the lowest sampled mixing values</strong>.
+    Isolation preserves local specialisation. In this transport regime, the predicted Goldilocks optimum
+    at intermediate D was not observed.</p>
+  </div>
+  <div class="sci-box">
+    <div class="sci-title">CURRENT ANALYSIS</div>
+    <p id="sciFindingsText">Run the simulation to see live comparison across scenarios.</p>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+//  UTILITY
+// ─────────────────────────────────────────────
+function gaussian(mean, std) {
+  let u, v, s;
+  do { u = Math.random()*2-1; v = Math.random()*2-1; s = u*u+v*v; } while (s >= 1 || s === 0);
+  return mean + std * u * Math.sqrt(-2 * Math.log(s) / s);
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function randomFloatArray(n) {
+  const out = new Float64Array(n);
+  for (let i = 0; i < n; i++) out[i] = Math.random();
+  return out;
+}
+
+function thetaToRGB(t) {
+  const stops = [
+    [0.00, [30, 80, 220]],
+    [0.20, [0, 190, 200]],
+    [0.50, [50, 220, 150]],
+    [0.80, [220, 180, 30]],
+    [1.00, [220, 50, 50]]
+  ];
+  for (let i = 0; i < stops.length - 1; i++) {
+    if (t <= stops[i+1][0]) {
+      const f = (t - stops[i][0]) / (stops[i+1][0] - stops[i][0]);
+      const c0 = stops[i][1], c1 = stops[i+1][1];
+      return [
+        Math.round(c0[0] + f*(c1[0]-c0[0])),
+        Math.round(c0[1] + f*(c1[1]-c0[1])),
+        Math.round(c0[2] + f*(c1[2]-c0[2]))
+      ];
+    }
+  }
+  return stops[stops.length-1][1];
+}
+
+function envToRGB(e) {
+  return [
+    Math.round(5 + e*20),
+    Math.round(10 + e*120),
+    Math.round(40 + e*160)
+  ];
+}
+
+// ─────────────────────────────────────────────
+//  ENVIRONMENT BUILDERS
+// ─────────────────────────────────────────────
+function buildUniform(N) {
+  return new Float64Array(N*N).fill(0.5);
+}
+
+function buildGradient(N, h) {
+  const env = new Float64Array(N*N);
+  for (let y = 0; y < N; y++)
+    for (let x = 0; x < N; x++)
+      env[y*N+x] = (1-h)*0.5 + h*(x/Math.max(1, N-1));
+  return env;
+}
+
+function buildPatches(N, h) {
+  let env = new Float64Array(N*N);
+  for (let i = 0; i < N*N; i++) env[i] = Math.random();
+  for (let iter = 0; iter < 4; iter++) {
+    const tmp = new Float64Array(N*N);
+    for (let y = 0; y < N; y++) {
+      for (let x = 0; x < N; x++) {
+        let s = 0, c = 0;
+        for (let dy = -2; dy <= 2; dy++) {
+          for (let dx = -2; dx <= 2; dx++) {
+            s += env[((y+dy+N)%N)*N + (x+dx+N)%N]; c++;
+          }
+        }
+        tmp[y*N+x] = s/c;
+      }
+    }
+    env = tmp;
+  }
+  let mn = Infinity, mx = -Infinity;
+  for (let v of env) { if (v < mn) mn = v; if (v > mx) mx = v; }
+  const range = mx - mn + 1e-10;
+  for (let i = 0; i < N*N; i++)
+    env[i] = (1-h)*0.5 + h*(env[i]-mn)/range;
+  return env;
+}
+
+function buildHotspots(N, h) {
+  const env = new Float64Array(N*N).fill(0.2);
+  const nSpots = 4 + Math.floor(Math.random()*6);
+  for (let s = 0; s < nSpots; s++) {
+    const cx = Math.floor(Math.random()*N);
+    const cy = Math.floor(Math.random()*N);
+    const rad = 5 + Math.random()*10;
+    for (let y = 0; y < N; y++) {
+      for (let x = 0; x < N; x++) {
+        const ddx = Math.min(Math.abs(x-cx), N-Math.abs(x-cx));
+        const ddy = Math.min(Math.abs(y-cy), N-Math.abs(y-cy));
+        const dist = Math.sqrt(ddx*ddx + ddy*ddy);
+        if (dist < rad) env[y*N+x] += (1 - dist/rad) * h * 0.6;
+      }
+    }
+  }
+  for (let i = 0; i < N*N; i++) env[i] = Math.min(1, Math.max(0, env[i]));
+  return env;
+}
+
+function buildEnv(N, h, pattern) {
+  if (h === 0 || pattern === 'uniform') return buildUniform(N);
+  if (pattern === 'gradient') return buildGradient(N, h);
+  if (pattern === 'hotspots') return buildHotspots(N, h);
+  return buildPatches(N, h);
+}
+
+// ─────────────────────────────────────────────
+//  SIMULATION
+// ─────────────────────────────────────────────
+class Simulation {
+  constructor(cfg) {
+    this.N = cfg.gridSize;
+    this.D = cfg.D;
+    this.h = cfg.h;
+    this.beta = cfg.beta;
+    this.pattern = cfg.pattern;
+    this.mixingMode = cfg.mixingMode || 'global';
+    this.abiogenesisMode = cfg.abiogenesisMode || 'uniform';
+    this.abiogenesisTheta = cfg.abiogenesisTheta ?? 0.5;
+
+    const S = this.N * this.N;
+    this.S = S;
+    this.grid = new Int32Array(S).fill(-1);  // species id, -1=empty
+    this.theta = new Float64Array(S);
+    this.repRate = new Float64Array(S);
+    this.resources = new Float64Array(S).fill(1);
+    this.envMap = buildEnv(this.N, this.h, this.pattern);
+
+    // Sim constants
+    this.baseD = 0.04;
+    this.tradeoff = 0.08;
+    this.baseR = 0.15;
+    this.mutRate = 0.02;
+    this.mutSigmaTheta = 0.10;
+    this.mutSigmaR = 0.015;
+    this.resCost = 0.12;
+    this.resRegen = 0.03;
+    this.spawnRate = 0.0005;
+    this.nInitial = 20;
+
+    this.nextId = 0;
+    this.tick = 0;
+
+    // Precompute neighbors
+    this.nbrs = new Int32Array(S * 4);
+    const N = this.N;
+    for (let i = 0; i < S; i++) {
+      const x = i % N, y = Math.floor(i / N);
+      this.nbrs[i*4+0] = ((y-1+N)%N)*N + x;
+      this.nbrs[i*4+1] = ((y+1)%N)*N + x;
+      this.nbrs[i*4+2] = y*N + (x-1+N)%N;
+      this.nbrs[i*4+3] = y*N + (x+1)%N;
+    }
+
+    // Seed initial population
+    const n0 = Math.min(this.nInitial, S);
+    const idxs = shuffle([...Array(S).keys()]).slice(0, n0);
+    for (const idx of idxs) {
+      this.grid[idx] = this.nextId++;
+      this.theta[idx] = Math.random();
+      this.repRate[idx] = this.baseR;
+    }
+
+    // History for charts
+    this.histThetaStd = [];
+    this.histShannonH = [];
+    this.maxHistory = 300;
+  }
+
+  step() {
+    const S = this.S;
+    const g = this.grid, th = this.theta, rr = this.repRate, rs = this.resources, env = this.envMap;
+    const nb = this.nbrs;
+    const rDeath = randomFloatArray(S);
+    const rMix = randomFloatArray(S);
+    const rRep = randomFloatArray(S);
+    const rMut = randomFloatArray(S);
+    const rAbio = randomFloatArray(S);
+    const alive = new Uint8Array(S);
+    const occupied = new Uint8Array(S);
+    for (let i = 0; i < S; i++) if (g[i] >= 0) occupied[i] = 1;
+
+    // ─ DEATH ─
+    for (let i = 0; i < S; i++) {
+      if (!occupied[i]) continue;
+      const dProb = this.baseD + this.tradeoff * rr[i] * rr[i];
+      if (rDeath[i] < dProb) {
+        g[i] = -1;
+      } else {
+        alive[i] = 1;
+      }
+    }
+
+    // ─ MIXING ─
+    if (this.D > 0) {
+      const movers = [];
+      for (let i = 0; i < S; i++) {
+        if (alive[i] && rMix[i] < this.D) movers.push(i);
+      }
+      shuffle(movers);
+
+      if (this.mixingMode === 'global') {
+        const empty = [];
+        for (let i = 0; i < S; i++) if (g[i] < 0) empty.push(i);
+
+        for (const i of movers) {
+          if (g[i] < 0 || empty.length === 0) continue;
+          const pick = Math.floor(Math.random() * empty.length);
+          const t = empty[pick];
+          g[t] = g[i];
+          th[t] = th[i];
+          rr[t] = rr[i];
+          g[i] = -1;
+          empty[pick] = i;
+        }
+      } else {
+        for (const i of movers) {
+          if (g[i] < 0) continue;
+          const emptyNbrs = [];
+          for (let k = 0; k < 4; k++) {
+            const j = nb[i*4 + k];
+            if (g[j] < 0) emptyNbrs.push(j);
+          }
+          if (emptyNbrs.length === 0) continue;
+          const t = emptyNbrs[Math.floor(Math.random() * emptyNbrs.length)];
+          g[t] = g[i];
+          th[t] = th[i];
+          rr[t] = rr[i];
+          g[i] = -1;
+        }
+      }
+    }
+
+    // ─ REPLICATION ─
+    const repList = [];
+    for (let i = 0; i < S; i++) {
+      if (g[i] < 0) continue;
+      const nm = Math.exp(-this.beta * (env[i]-th[i]) * (env[i]-th[i]));
+      const fit = rr[i] * nm * Math.min(1, rs[i]);
+      if (rRep[i] < fit && rs[i] >= this.resCost) repList.push(i);
+    }
+    shuffle(repList);
+
+    for (const i of repList) {
+      if (g[i] < 0) continue;
+      const emptyNbrs = [];
+      for (let k = 0; k < 4; k++) {
+        const j = nb[i*4 + k];
+        if (g[j] < 0) emptyNbrs.push(j);
+      }
+      if (emptyNbrs.length === 0) continue;
+      const t = emptyNbrs[Math.floor(Math.random() * emptyNbrs.length)];
+
+      if (rMut[i] < this.mutRate) {
+        th[t] = Math.min(1, Math.max(0, gaussian(th[i], this.mutSigmaTheta)));
+        rr[t] = Math.min(0.95, Math.max(0.005, gaussian(rr[i], this.mutSigmaR)));
+        g[t] = this.nextId++;
+      } else {
+        th[t] = th[i];
+        rr[t] = rr[i];
+        g[t] = g[i];
+      }
+      rs[i] -= this.resCost;
+    }
+
+    // ─ RESOURCE REGEN ─
+    for (let i = 0; i < S; i++) {
+      if (g[i] < 0) rs[i] = Math.min(1, rs[i] + this.resRegen);
+    }
+
+    // ─ ABIOGENESIS ─
+    for (let i = 0; i < S; i++) {
+      if (g[i] >= 0) continue;
+      if (rAbio[i] < this.spawnRate && rs[i] >= this.resCost) {
+        g[i] = this.nextId++;
+        th[i] = this.abiogenesisMode === 'fixed_theta' ? this.abiogenesisTheta : Math.random();
+        rr[i] = this.baseR;
+        rs[i] -= this.resCost;
+      }
+    }
+
+    this.tick++;
+    this._recordMetrics();
+  }
+
+  _recordMetrics() {
+    const occupied = [];
+    for (let i = 0; i < this.S; i++) if (this.grid[i] >= 0) occupied.push(i);
+    const pop = occupied.length;
+    if (pop === 0) { this.histThetaStd.push(0); this.histShannonH.push(0); return; }
+
+    // theta_std
+    let sumT = 0, sumT2 = 0;
+    for (const i of occupied) { sumT += this.theta[i]; sumT2 += this.theta[i]*this.theta[i]; }
+    const meanT = sumT / pop;
+    const thetaStd = Math.sqrt(Math.max(0, sumT2/pop - meanT*meanT));
+
+    // Ecological Shannon H' using 20 theta bins
+    const bins = new Float64Array(20);
+    for (const i of occupied) {
+      const b = Math.min(19, Math.floor(this.theta[i] * 20));
+      bins[b]++;
+    }
+    let H = 0;
+    for (const c of bins) if (c > 0) { const p = c/pop; H -= p * Math.log(p); }
+
+    this.histThetaStd.push(thetaStd);
+    this.histShannonH.push(H);
+    if (this.histThetaStd.length > this.maxHistory) this.histThetaStd.shift();
+    if (this.histShannonH.length > this.maxHistory) this.histShannonH.shift();
+  }
+
+  getMetrics() {
+    const occupied = [];
+    for (let i = 0; i < this.S; i++) if (this.grid[i] >= 0) occupied.push(i);
+    const pop = occupied.length;
+    if (pop === 0) return { pop: 0, occ: 0, thetaStd: 0, shannonH: 0, ecoTypes: 0 };
+
+    let sumT = 0, sumT2 = 0;
+    const bins = new Int32Array(20);
+    for (const i of occupied) {
+      sumT += this.theta[i]; sumT2 += this.theta[i]*this.theta[i];
+      bins[Math.min(19, Math.floor(this.theta[i]*20))]++;
+    }
+    const meanT = sumT / pop;
+    const thetaStd = Math.sqrt(Math.max(0, sumT2/pop - meanT*meanT));
+    let H = 0, ecoTypes = 0;
+    for (const c of bins) if (c > 0) { ecoTypes++; const p = c/pop; H -= p*Math.log(p); }
+
+    return { pop, occ: pop/this.S, thetaStd, shannonH: H, ecoTypes };
+  }
+
+  getThetaArray() {
+    const out = [];
+    for (let i = 0; i < this.S; i++) if (this.grid[i] >= 0) out.push(this.theta[i]);
+    return out;
+  }
+}
+
+// ─────────────────────────────────────────────
+//  RENDERER
+// ─────────────────────────────────────────────
+class GridRenderer {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.showEnv = false;
+  }
+
+  draw(sim) {
+    const ctx = this.ctx;
+    const W = this.canvas.width, H = this.canvas.height;
+    const N = sim.N;
+    const cellW = W / N, cellH = H / N;
+    const g = sim.grid, th = sim.theta, env = sim.envMap;
+
+    const imgData = ctx.createImageData(W, H);
+    const d = imgData.data;
+
+    for (let y = 0; y < N; y++) {
+      for (let x = 0; x < N; x++) {
+        const ci = y*N + x;
+        let r, g2, b;
+
+        if (this.showEnv) {
+          [r, g2, b] = envToRGB(env[ci]);
+          if (g[ci] >= 0) { r = Math.min(255, r+60); g2 = Math.min(255, g2+60); b = Math.min(255, b+60); }
+        } else {
+          if (g[ci] < 0) { r = 12; g2 = 13; b = 22; }
+          else { [r, g2, b] = thetaToRGB(th[ci]); }
+        }
+
+        // Fill the cell pixels (with 1px gap)
+        const px0 = Math.floor(x * cellW) + 1;
+        const py0 = Math.floor(y * cellH) + 1;
+        const px1 = Math.floor((x+1) * cellW);
+        const py1 = Math.floor((y+1) * cellH);
+
+        for (let py = py0; py < py1; py++) {
+          for (let px = px0; px < px1; px++) {
+            const idx = (py * W + px) * 4;
+            d[idx] = r; d[idx+1] = g2; d[idx+2] = b; d[idx+3] = 255;
+          }
+        }
+      }
+    }
+    ctx.putImageData(imgData, 0, 0);
+  }
+}
+
+// ─────────────────────────────────────────────
+//  LINE CHART
+// ─────────────────────────────────────────────
+class LineChart {
+  constructor(canvas, color, label) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.color = color;
+    this.label = label;
+  }
+
+  draw(data) {
+    const ctx = this.ctx;
+    const W = this.canvas.width, H = this.canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    ctx.fillStyle = '#080910';
+    ctx.fillRect(0, 0, W, H);
+
+    if (data.length < 2) {
+      ctx.fillStyle = '#1a2040';
+      ctx.font = `11px JetBrains Mono`;
+      ctx.textAlign = 'center';
+      ctx.fillText('Waiting for data...', W/2, H/2);
+      return;
+    }
+
+    let mn = Infinity, mx = -Infinity;
+    for (const v of data) { if (v < mn) mn = v; if (v > mx) mx = v; }
+    const range = Math.max(mx - mn, 0.02);
+    mn = Math.max(0, mn - range*0.1);
+    mx = mx + range*0.1;
+    const rng = mx - mn;
+
+    const pad = { t: 8, b: 18, l: 38, r: 8 };
+    const iW = W - pad.l - pad.r;
+    const iH = H - pad.t - pad.b;
+
+    // Guide lines
+    ctx.strokeStyle = '#1a2040';
+    ctx.lineWidth = 0.5;
+    for (let i = 0; i <= 3; i++) {
+      const y = pad.t + (i/3)*iH;
+      ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W-pad.r, y); ctx.stroke();
+      const val = mx - (i/3)*rng;
+      ctx.fillStyle = '#2a3860';
+      ctx.font = `9px JetBrains Mono`;
+      ctx.textAlign = 'right';
+      ctx.fillText(val.toFixed(3), pad.l-3, y+3);
+    }
+
+    // Filled area
+    ctx.beginPath();
+    for (let i = 0; i < data.length; i++) {
+      const x = pad.l + (i/(data.length-1))*iW;
+      const y = pad.t + (1-(data[i]-mn)/rng)*iH;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.lineTo(pad.l + iW, pad.t + iH);
+    ctx.lineTo(pad.l, pad.t + iH);
+    ctx.closePath();
+    const gr = ctx.createLinearGradient(0, pad.t, 0, pad.t+iH);
+    gr.addColorStop(0, this.color + '44');
+    gr.addColorStop(1, this.color + '00');
+    ctx.fillStyle = gr;
+    ctx.fill();
+
+    // Glowing line
+    ctx.save();
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur = 10;
+    ctx.strokeStyle = this.color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i < data.length; i++) {
+      const x = pad.l + (i/(data.length-1))*iW;
+      const y = pad.t + (1-(data[i]-mn)/rng)*iH;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // Current value
+    const cur = data[data.length-1];
+    ctx.fillStyle = this.color;
+    ctx.font = `bold 14px JetBrains Mono`;
+    ctx.textAlign = 'left';
+    ctx.fillText(cur.toFixed(3), pad.l + 4, pad.t + 14);
+
+    // Label
+    ctx.fillStyle = '#2a3860';
+    ctx.font = `9px Chakra Petch`;
+    ctx.textAlign = 'right';
+    ctx.fillText(this.label, W - pad.r, H - 3);
+  }
+}
+
+// ─────────────────────────────────────────────
+//  HISTOGRAM
+// ─────────────────────────────────────────────
+class Histogram {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.nBins = 20;
+    this.heights = new Array(this.nBins).fill(0);
+    this.targets = new Array(this.nBins).fill(0);
+  }
+
+  update(thetaArr) {
+    const n = thetaArr.length;
+    const counts = new Array(this.nBins).fill(0);
+    for (const t of thetaArr) counts[Math.min(this.nBins-1, Math.floor(t*this.nBins))]++;
+    const mx = Math.max(...counts, 1);
+    for (let i = 0; i < this.nBins; i++) this.targets[i] = counts[i]/mx;
+  }
+
+  draw() {
+    for (let i = 0; i < this.nBins; i++)
+      this.heights[i] += (this.targets[i] - this.heights[i]) * 0.18;
+
+    const ctx = this.ctx;
+    const W = this.canvas.width, H = this.canvas.height;
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#080910';
+    ctx.fillRect(0, 0, W, H);
+
+    const pad = { t: 4, b: 16, l: 4, r: 4 };
+    const iW = W - pad.l - pad.r;
+    const iH = H - pad.t - pad.b;
+    const bW = iW / this.nBins;
+
+    for (let i = 0; i < this.nBins; i++) {
+      const t = (i + 0.5) / this.nBins;
+      const [r, g, b] = thetaToRGB(t);
+      const barH = this.heights[i] * iH;
+      const x = pad.l + i * bW;
+      const y = pad.t + iH - barH;
+      ctx.globalAlpha = 0.6 + 0.4 * this.heights[i];
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
+      ctx.fillRect(x + 0.5, y, bW - 1.5, barH);
+    }
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = '#2a3860';
+    ctx.font = '8px JetBrains Mono';
+    ctx.textAlign = 'center';
+    ctx.fillText('θ=0', pad.l + bW*1.5, H-3);
+    ctx.fillText('θ=0.5', pad.l + bW*10, H-3);
+    ctx.fillText('θ=1', pad.l + bW*18.5, H-3);
+  }
+}
+
+// ─────────────────────────────────────────────
+//  INSIGHT TEXT
+// ─────────────────────────────────────────────
+function getInsight(metrics, D, h, beta) {
+  const { thetaStd, shannonH, occ, ecoTypes } = metrics;
+  const parts = [];
+
+  if (occ < 0.1) {
+    parts.push('Population is sparse — early colonisation phase.');
+  } else if (thetaStd < 0.04) {
+    parts.push('⚠ <strong>Ecologically homogeneous</strong> — all replicators share similar niches. Community lacks functional diversity.');
+  } else if (thetaStd < 0.10) {
+    parts.push('Moderate niche differentiation — some ecological specialisation present.');
+  } else if (thetaStd < 0.16) {
+    parts.push('✓ <strong>Significant functional diversity</strong> — replicators are adapting to distinct niches.');
+  } else {
+    parts.push('✓✓ <strong>High functional diversity</strong> — community spans a wide range of ecological strategies.');
+  }
+
+  if (D > 0.3) {
+    parts.push('High global mixing is teleporting specialists into mismatched patches and eroding local adaptation.');
+  } else if (D < 0.05) {
+    parts.push('Low mixing allows stable local specialisation to persist.');
+  } else {
+    parts.push('Intermediate global mixing still redistributes specialists across the lattice and suppresses niche matching.');
+  }
+
+  if (h < 0.2) parts.push('Uniform environment limits achievable functional diversity regardless of mixing.');
+  else if (h > 0.6) parts.push('High environmental heterogeneity is supporting diverse niche opportunities.');
+
+  if (ecoTypes > 12) parts.push(`${ecoTypes} distinct ecological types detected (θ-bins occupied).`);
+
+  return parts.join(' ');
+}
+
+function getWhyText(D, h, pattern) {
+  if (D > 0.3 && h < 0.3) return 'Deep ocean conditions: well-mixed and uniform. Global transport homogenises the lattice before strong niche structure can persist.';
+  if (D < 0.05 && h > 0.6) return 'Isolated pool conditions: minimal long-range transport allows replicators to locally adapt. Highest functional diversity is expected here.';
+  if (D > 0.1 && D < 0.3 && h > 0.5) return 'Intermediate global transport still moves specialists into foreign patches faster than it helps stable local adaptation.';
+  if (pattern === 'hotspots') return 'Hotspot pattern: localised high-quality environments create patchy niche structure, similar to hydrothermal vent fields.';
+  if (D < 0.1 && h > 0.4) return 'Low mixing + high heterogeneity: optimal conditions for functional diversity. Replicators develop specialised niches in different patches.';
+  return 'Adjust parameters to explore how mixing and heterogeneity shape replicator communities.';
+}
+
+function getFindings(metrics, scenario) {
+  const { thetaStd, shannonH } = metrics;
+  const lines = [];
+  if (scenario) {
+    const labels = {ocean:'Deep Ocean',ponds:'Shallow Ponds',tidal:'Tidal Zone',vents:'Hydrothermal Vents'};
+    lines.push(`<em>${labels[scenario]}</em>: `);
+  } else {
+    lines.push('<em>Custom configuration</em>: ');
+  }
+  lines.push(`θ<sub>std</sub> = ${thetaStd.toFixed(3)}`);
+  if (thetaStd > 0.14) lines.push(' → <strong>high functional diversity</strong> (many distinct niche strategies coexist)');
+  else if (thetaStd < 0.05) lines.push(' → <strong>near-zero functional diversity</strong> (ecologically uniform community)');
+  else lines.push(' → moderate functional diversity');
+  lines.push(`<br>H' = ${shannonH.toFixed(2)}`);
+  if (shannonH < 1.5) lines.push(' (few eco types)');
+  else if (shannonH > 2.5) lines.push(' (many eco types)');
+  return lines.join('');
+}
+
+// ─────────────────────────────────────────────
+//  PRESETS
+// ─────────────────────────────────────────────
+const PRESETS = {
+  ocean: { h: 0.10, D: 0.50, pattern: 'uniform', label: 'Deep Ocean' },
+  ponds: { h: 0.80, D: 0.02, pattern: 'patches', label: 'Shallow Ponds' },
+  tidal: { h: 0.70, D: 0.15, pattern: 'patches', label: 'Tidal Zone' },
+  vents: { h: 0.60, D: 0.08, pattern: 'hotspots', label: 'Hydrothermal Vents' },
+};
+
+// ─────────────────────────────────────────────
+//  APP STATE & MAIN LOOP
+// ─────────────────────────────────────────────
+let sim = null;
+let renderer = null;
+let chartTheta = null;
+let chartShannon = null;
+let histogram = null;
+let isPlaying = true;
+let animId = null;
+let ticksPerFrame = 20;
+let currentScenario = 'ponds';
+let currentPattern = 'patches';
+let currentGridSize = 40;
+let showEnvMap = false;
+let currentAbiogenesisMode = 'uniform';
+
+function getConfig() {
+  return {
+    gridSize: currentGridSize,
+    h: parseFloat(document.getElementById('hSlider').value),
+    D: parseFloat(document.getElementById('dSlider').value),
+    beta: parseFloat(document.getElementById('betaSlider').value),
+    abiogenesisMode: currentAbiogenesisMode,
+    abiogenesisTheta: parseFloat(document.getElementById('abioThetaSlider').value),
+    pattern: currentPattern,
+    mixingMode: 'global',
+  };
+}
+
+function initSim() {
+  if (animId) cancelAnimationFrame(animId);
+  const cfg = getConfig();
+  sim = new Simulation(cfg);
+  renderer = new GridRenderer(document.getElementById('simCanvas'));
+  renderer.showEnv = showEnvMap;
+  if (!chartTheta) {
+    chartTheta = new LineChart(document.getElementById('chartTheta'), '#00d4ff', 'FUNCTIONAL DIVERSITY');
+    chartShannon = new LineChart(document.getElementById('chartShannon'), '#ffaa00', 'ECOLOGICAL SHANNON H\'');
+    histogram = new Histogram(document.getElementById('chartHist'));
+  }
+  updateUI();
+  if (isPlaying) loop();
+}
+
+function loop() {
+  for (let i = 0; i < ticksPerFrame; i++) sim.step();
+  render();
+  if (isPlaying) animId = requestAnimationFrame(loop);
+}
+
+function render() {
+  renderer.draw(sim);
+  const m = sim.getMetrics();
+  const ta = sim.getThetaArray();
+
+  // Update charts
+  chartTheta.draw(sim.histThetaStd);
+  chartShannon.draw(sim.histShannonH);
+  histogram.update(ta);
+  histogram.draw();
+
+  // Update stats bar
+  document.getElementById('statTick').textContent = sim.tick;
+  document.getElementById('statOcc').textContent = (m.occ*100).toFixed(1)+'%';
+  document.getElementById('statPop').textContent = m.pop;
+  document.getElementById('statEcoTypes').textContent = m.ecoTypes;
+
+  // Update insight
+  document.getElementById('insightBox').innerHTML = getInsight(m, sim.D, sim.h, sim.beta);
+  document.getElementById('sciFindingsText').innerHTML = getFindings(m, currentScenario);
+}
+
+function updateUI() {
+  const D = parseFloat(document.getElementById('dSlider').value);
+  const h = parseFloat(document.getElementById('hSlider').value);
+  document.getElementById('whyText').textContent = getWhyText(D, h, currentPattern);
+  document.getElementById('hVal').textContent = h.toFixed(2);
+  document.getElementById('dVal').textContent = D.toFixed(2);
+  document.getElementById('betaVal').textContent = document.getElementById('betaSlider').value;
+  document.getElementById('abioThetaVal').textContent = parseFloat(document.getElementById('abioThetaSlider').value).toFixed(2);
+  document.getElementById('speedVal').textContent = document.getElementById('speedSlider').value;
+}
+
+function clearScenarioSelection() {
+  currentScenario = null;
+  document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('active'));
+}
+
+function resetForConfigChange({ keepScenario = false } = {}) {
+  if (!keepScenario) clearScenarioSelection();
+  initSim();
+}
+
+// ─────────────────────────────────────────────
+//  EVENT LISTENERS
+// ─────────────────────────────────────────────
+document.getElementById('btnPlay').addEventListener('click', function() {
+  isPlaying = !isPlaying;
+  this.textContent = isPlaying ? '⏸ PAUSE' : '▶ PLAY';
+  this.classList.toggle('active', isPlaying);
+  if (isPlaying) loop();
+});
+
+document.getElementById('btnReset').addEventListener('click', () => {
+  isPlaying = true;
+  document.getElementById('btnPlay').textContent = '⏸ PAUSE';
+  document.getElementById('btnPlay').classList.add('active');
+  initSim();
+});
+
+document.getElementById('speedSlider').addEventListener('input', function() {
+  ticksPerFrame = parseInt(this.value);
+  document.getElementById('speedVal').textContent = this.value;
+});
+
+// Param sliders
+['hSlider','dSlider','betaSlider','abioThetaSlider'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateUI);
+});
+
+// Parameter changes start a fresh fixed-parameter run, matching the Python workflow.
+document.getElementById('hSlider').addEventListener('change', () => resetForConfigChange());
+document.getElementById('dSlider').addEventListener('change', () => resetForConfigChange());
+document.getElementById('betaSlider').addEventListener('change', () => resetForConfigChange());
+document.getElementById('abioThetaSlider').addEventListener('change', () => resetForConfigChange());
+
+// Scenario cards
+document.getElementById('scenariosGrid').addEventListener('click', e => {
+  const card = e.target.closest('.scenario-card');
+  if (!card) return;
+  const sc = card.dataset.scenario;
+  const preset = PRESETS[sc];
+  if (!preset) return;
+  currentScenario = sc;
+  currentPattern = preset.pattern;
+
+  document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('active'));
+  card.classList.add('active');
+
+  document.getElementById('hSlider').value = preset.h;
+  document.getElementById('dSlider').value = preset.D;
+
+  // Update pattern buttons
+  document.querySelectorAll('#patternRow .pat-btn').forEach(b => b.classList.toggle('active', b.dataset.pat === preset.pattern));
+
+  updateUI();
+  isPlaying = true;
+  document.getElementById('btnPlay').textContent = '⏸ PAUSE';
+  document.getElementById('btnPlay').classList.add('active');
+  initSim();
+});
+
+// Pattern buttons
+document.getElementById('patternRow').addEventListener('click', e => {
+  const btn = e.target.closest('.pat-btn');
+  if (!btn) return;
+  currentPattern = btn.dataset.pat;
+  document.querySelectorAll('#patternRow .pat-btn').forEach(b => b.classList.toggle('active', b === btn));
+  updateUI();
+  resetForConfigChange();
+});
+
+document.getElementById('abioModeRow').addEventListener('click', e => {
+  const btn = e.target.closest('.pat-btn');
+  if (!btn) return;
+  currentAbiogenesisMode = btn.dataset.abio;
+  document.querySelectorAll('#abioModeRow .pat-btn').forEach(b => b.classList.toggle('active', b === btn));
+  updateUI();
+  resetForConfigChange();
+});
+
+// Grid size
+document.getElementById('gsizeRow').addEventListener('click', e => {
+  const btn = e.target.closest('.gsize-btn');
+  if (!btn) return;
+  currentGridSize = parseInt(btn.dataset.size);
+  document.querySelectorAll('.gsize-btn').forEach(b => b.classList.toggle('active', b === btn));
+  resetForConfigChange();
+});
+
+// Env map toggle
+document.getElementById('btnEnvMap').addEventListener('click', function() {
+  showEnvMap = !showEnvMap;
+  if (renderer) renderer.showEnv = showEnvMap;
+  this.classList.toggle('active', showEnvMap);
+  this.textContent = showEnvMap ? 'HIDE ENV' : 'SHOW ENV';
+});
+
+// ─── START ───
+initSim();
+</script>
+</body>
+</html>

@@ -1,0 +1,255 @@
+{
+  "run_class": "full",
+  "seed_count": 5,
+  "sweep_dimensions": {
+    "mixing_values": 10,
+    "heterogeneity_values": 10,
+    "points": 100
+  },
+  "meta": {
+    "timestamp": "2026-03-11 00:45:46",
+    "total_time_s": 2566.7572515010834,
+    "grid_sizes": {
+      "scenario": 40,
+      "sweep": 40
+    },
+    "ticks": {
+      "scenario": 800,
+      "sweep": 600
+    },
+    "seeds": [
+      42,
+      123,
+      456,
+      789,
+      1011
+    ],
+    "sweep_d": [
+      0.0,
+      0.01,
+      0.02,
+      0.05,
+      0.1,
+      0.15,
+      0.2,
+      0.3,
+      0.5,
+      0.8
+    ],
+    "sweep_h": [
+      0.0,
+      0.1,
+      0.2,
+      0.3,
+      0.4,
+      0.5,
+      0.6,
+      0.7,
+      0.8,
+      1.0
+    ],
+    "mixing_mode": "global",
+    "local_sweep_included": true,
+    "colonization_sweep_included": true,
+    "fixes_applied": [
+      "theta-binned ecological H (not lineage-based)",
+      "global mixing (teleport, not local diffusion)",
+      "local diffusion full sweep added",
+      "colonization-limited sweep added",
+      "statistical tests (Welch t-test, Cohen d) added",
+      "uniform abiogenesis (not E-dependent)",
+      "unique IDs for all founders",
+      "proper across-seed statistics"
+    ]
+  },
+  "scenarios": {
+    "metrics": {
+      "deep_ocean": {
+        "label": "Deep Ocean",
+        "theta_std_mean": 0.038507315537876244,
+        "theta_std_std": 0.003060303610153619,
+        "shannon_eco_mean": 0.9875639676488482,
+        "shannon_eco_std": 0.1320573513949818,
+        "population_mean": 1374.98,
+        "population_std": 7.013287388949651,
+        "occupancy_mean": 0.8593624999999999,
+        "occupancy_std": 0.004383304618093602,
+        "mean_fitness_mean": 0.0851874457910675,
+        "mean_fitness_std": 0.0002666379394180986
+      },
+      "pond_network": {
+        "label": "Shallow Ponds",
+        "theta_std_mean": 0.13580051907440233,
+        "theta_std_std": 0.011514560002596552,
+        "shannon_eco_mean": 2.1838208110204915,
+        "shannon_eco_std": 0.07452461422285271,
+        "population_mean": 1301.79,
+        "population_std": 10.009673321342715,
+        "occupancy_mean": 0.8136187500000001,
+        "occupancy_std": 0.006256045825839151,
+        "mean_fitness_mean": 0.07861720554489829,
+        "mean_fitness_std": 0.001611620670653521
+      },
+      "tidal_zone": {
+        "label": "Tidal Zone",
+        "theta_std_mean": 0.0625455603779187,
+        "theta_std_std": 0.01044175637472657,
+        "shannon_eco_mean": 1.4911764110432646,
+        "shannon_eco_std": 0.1194705240591934,
+        "population_mean": 1332.4739999999997,
+        "population_std": 10.896178412636237,
+        "occupancy_mean": 0.8327962499999998,
+        "occupancy_std": 0.006810111507897588,
+        "mean_fitness_mean": 0.07912869966013307,
+        "mean_fitness_std": 0.0018276947918824428
+      },
+      "hydrothermal_vent": {
+        "label": "Hydrothermal Vents",
+        "theta_std_mean": 0.06577848784463586,
+        "theta_std_std": 0.007261022977599079,
+        "shannon_eco_mean": 1.4303976635997253,
+        "shannon_eco_std": 0.20794717010266775,
+        "population_mean": 1335.6200000000001,
+        "population_std": 15.090544059112,
+        "occupancy_mean": 0.8347625000000001,
+        "occupancy_std": 0.009431590036944881,
+        "mean_fitness_mean": 0.08172992868517473,
+        "mean_fitness_std": 0.0035423250620381405
+      }
+    },
+    "ranking_by_theta_std": [
+      "Shallow Ponds",
+      "Hydrothermal Vents",
+      "Tidal Zone",
+      "Deep Ocean"
+    ],
+    "pond_vs_deep_ocean_theta_std_fold_change": 3.5266161033954018
+  },
+  "sweep": {
+    "best_overall": {
+      "mixing_rate": 0.0,
+      "heterogeneity": 1.0,
+      "theta_std_mean": 0.20719716710319439,
+      "shannon_eco_mean": 2.6213673704160856
+    },
+    "best_mixing_zero_for_all_h": true,
+    "heterogeneity_profiles": [
+      {
+        "heterogeneity": 0.0,
+        "best_mixing_rate": 0.0,
+        "best_theta_std": 0.06022159881448739,
+        "lowest_mixing_theta_std": 0.06022159881448739,
+        "highest_mixing_theta_std": 0.04376547193167781,
+        "drop_to_high_mixing_pct": 27.325954818142023
+      },
+      {
+        "heterogeneity": 0.1,
+        "best_mixing_rate": 0.0,
+        "best_theta_std": 0.060002269045976164,
+        "lowest_mixing_theta_std": 0.060002269045976164,
+        "highest_mixing_theta_std": 0.042461798512551,
+        "drop_to_high_mixing_pct": 29.23301203823634
+      },
+      {
+        "heterogeneity": 0.2,
+        "best_mixing_rate": 0.0,
+        "best_theta_std": 0.061246210430940376,
+        "lowest_mixing_theta_std": 0.061246210430940376,
+        "highest_mixing_theta_std": 0.04190787167437349,
+        "drop_to_high_mixing_pct": 31.574751516050604
+      },
+      {
+        "heterogeneity": 0.3,
+        "best_mixing_rate": 0.0,
+        "best_theta_std": 0.07851674947175391,
+        "lowest_mixing_theta_std": 0.07851674947175391,
+        "highest_mixing_theta_std": 0.04094966213851298,
+        "drop_to_high_mixing_pct": 47.84595336152517
+      },
+      {
+        "heterogeneity": 0.4,
+        "best_mixing_rate": 0.0,
+        "best_theta_std": 0.08986704496106412,
+        "lowest_mixing_theta_std": 0.08986704496106412,
+        "highest_mixing_theta_std": 0.050477945433240766,
+        "drop_to_high_mixing_pct": 43.830415860329126
+      },
+      {
+        "heterogeneity": 0.5,
+        "best_mixing_rate": 0.0,
+        "best_theta_std": 0.11765601106293958,
+        "lowest_mixing_theta_std": 0.11765601106293958,
+        "highest_mixing_theta_std": 0.04543151118144076,
+        "drop_to_high_mixing_pct": 61.38615377914064
+      },
+      {
+        "heterogeneity": 0.6,
+        "best_mixing_rate": 0.0,
+        "best_theta_std": 0.12965476704596227,
+        "lowest_mixing_theta_std": 0.12965476704596227,
+        "highest_mixing_theta_std": 0.05152397865328423,
+        "drop_to_high_mixing_pct": 60.26063689966824
+      },
+      {
+        "heterogeneity": 0.7,
+        "best_mixing_rate": 0.0,
+        "best_theta_std": 0.1397079633534199,
+        "lowest_mixing_theta_std": 0.1397079633534199,
+        "highest_mixing_theta_std": 0.05832225855072133,
+        "drop_to_high_mixing_pct": 58.25416307645739
+      },
+      {
+        "heterogeneity": 0.8,
+        "best_mixing_rate": 0.0,
+        "best_theta_std": 0.16848545196971493,
+        "lowest_mixing_theta_std": 0.16848545196971493,
+        "highest_mixing_theta_std": 0.06318581576451993,
+        "drop_to_high_mixing_pct": 62.497761660824274
+      },
+      {
+        "heterogeneity": 1.0,
+        "best_mixing_rate": 0.0,
+        "best_theta_std": 0.20719716710319439,
+        "lowest_mixing_theta_std": 0.20719716710319439,
+        "highest_mixing_theta_std": 0.0753907244042339,
+        "drop_to_high_mixing_pct": 63.6140177695163
+      }
+    ],
+    "h08": {
+      "best_mixing_rate": 0.0,
+      "best_theta_std": 0.16848545196971493,
+      "theta_std_at_d0": 0.16848545196971493,
+      "theta_std_at_d08": 0.06318581576451993,
+      "drop_pct_d0_to_d08": 62.497761660824274
+    }
+  },
+  "sensitivity": {
+    "beta_profiles": [
+      {
+        "niche_width": 10.0,
+        "best_mixing_rate": 0.0,
+        "best_theta_std": 0.18025173712646972,
+        "theta_std_at_lowest_mixing": 0.18025173712646972,
+        "theta_std_at_highest_mixing": 0.07008854050913402,
+        "drop_to_high_mixing_pct": 61.116302330025306
+      },
+      {
+        "niche_width": 20.0,
+        "best_mixing_rate": 0.0,
+        "best_theta_std": 0.16848545196971493,
+        "theta_std_at_lowest_mixing": 0.16848545196971493,
+        "theta_std_at_highest_mixing": 0.06318581576451993,
+        "drop_to_high_mixing_pct": 62.497761660824274
+      },
+      {
+        "niche_width": 40.0,
+        "best_mixing_rate": 0.0,
+        "best_theta_std": 0.17560673129062748,
+        "theta_std_at_lowest_mixing": 0.17560673129062748,
+        "theta_std_at_highest_mixing": 0.05743828577863171,
+        "drop_to_high_mixing_pct": 67.29152387469026
+      }
+    ],
+    "all_betas_peak_at_min_mixing": true
+  }
+}
