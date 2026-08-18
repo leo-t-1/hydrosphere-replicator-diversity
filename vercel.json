@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "/simulator.html" },
+    { "source": "/backend", "destination": "/simulator_backend.html" },
+    { "source": "/api/health", "destination": "/api/session" },
+    { "source": "/api/session/:id/step", "destination": "/api/step" },
+    { "source": "/api/session/:id", "destination": "/api/session" }
+  ],
+  "functions": {
+    "api/*.py": { "maxDuration": 60 }
+  }
+}
