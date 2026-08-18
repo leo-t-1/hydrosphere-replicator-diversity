@@ -537,6 +537,9 @@ let currentPattern = 'patches';
 let currentGridSize = 40;
 let currentScenario = 'ponds';
 let sessionId = null;
+// Opaque server state blob for stateless (serverless) backends, e.g. Vercel.
+// The local backend_simulator_server.py never returns one and ignores it.
+let stateBlob = null;
 let currentState = null;
 let isPlaying = false;
 let stepping = false;
@@ -858,6 +861,7 @@ async function deleteSession() {
     await requestJson(`/api/session/${sessionId}`, {method: 'DELETE'});
   } catch (_) {}
   sessionId = null;
+  stateBlob = null;
   setSessionLabel(null);
 }
 
@@ -872,6 +876,7 @@ async function resetSession() {
       body: JSON.stringify(getConfig()),
     });
     sessionId = state.session_id;
+    stateBlob = state.blob || null;
     setSessionLabel(sessionId);
     renderState(state);
     setStatus('live', 'PYTHON BACKEND LIVE');
@@ -910,8 +915,9 @@ async function stepSession(nSteps) {
   if (!sessionId) await resetSession();
   const state = await requestJson(`/api/session/${sessionId}/step`, {
     method: 'POST',
-    body: JSON.stringify({n_steps: nSteps}),
+    body: JSON.stringify(stateBlob ? {n_steps: nSteps, blob: stateBlob} : {n_steps: nSteps}),
   });
+  if (state.blob) stateBlob = state.blob;
   renderState(state);
 }
 
